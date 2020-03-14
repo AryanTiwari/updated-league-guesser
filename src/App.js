@@ -1,20 +1,20 @@
 import React, { useState  } from 'react';
 import { Input, List } from 'antd';
 import { Palette } from 'react-palette';
-import { motion } from "framer-motion"
+import { motion } from 'framer-motion';
+import moment from 'moment';
 import './App.css';
 
 function App() {
   const championData = require('./data/championData.json').data
-
-  const [guessedChamp , setGuessedChamp] = useState('')
   const [championToGuess, setChampionToGuess] = useState('')
   const [gameStart, setGameStart] = useState(false)
   const [championNames] = useState(Object.keys(championData))
   const [championsGuessed] = useState([])
+  const [seconds, setSeconds] = useState(0)
 
   // Body of the page
-  var body =
+  var start =
     <div>
       <button
         style={{ 
@@ -37,68 +37,93 @@ function App() {
   const generateRandomChampion = () => {
     var randomNumber = Math.round(Math.random() * (championNames.length - 1))
     setChampionToGuess(championNames[randomNumber])
-    championNames.splice(randomNumber, 1)
-  }
+    championNames.splice(randomNumber, 1)  }
 
   // Function to check if user input matches champion to guess
   //   if it does, generate new champion and remove guessed from list
-  const checkInput = (championGuess) => {
-    setGuessedChamp(championGuess)
-    if (true) {
+  const checkInput = (e) => {
+    if ((e.target.value).toLowerCase() === championToGuess.toLowerCase()) {
+      e.target.value = ""
       generateRandomChampion()
       championsGuessed.push(championToGuess)
     }
   }
 
-  // Make body of page the game once start is clicked
-  if (championNames.length === 0) {
-    body =
-    <div>
-      <p> you win </p>
-    </div>
-  }
-  else if (gameStart === true) {
-    body = 
-    <div>
-    <p> You have guessed {championsGuessed.length} out of the {championNames.length + championsGuessed.length} champions </p>
-    <p> {championToGuess} {championData[championToGuess].title} </p>
-      <Input style={{ width:128, marginBottom:8 }} 
-      placeholder="Champion Name"
-      onPressEnter={() => checkInput()}/>
-      <br/>
-      {championsGuessed}
-      <List
-        grid={{
-          gutter: 16, xs: 1, sm: 2, md: 4, lg: 4, xl: 6, xxl: 3,
-        }}
-        dataSource={championsGuessed.slice().reverse()}
-        renderItem={item => (
-          <List.Item>
-            <Palette src={require(`./data/champion/${item}.png`)}>
-              {({ data }) => (
-                <div style={{ color: data.vibrant }}>
-                  {item}
-                  <div/>
-                  <div className='championIcons' style={{borderColor: data.vibrant}}>
-                    <img
+  // Game once it starts
+  if (gameStart === true) {
+    var timer = setTimeout(() => {
+      setSeconds(seconds + 1)
+    }, 1000)
+    start = 
+      <div></div>
+    var guess = 
+      <div>
+        <p> Time: {moment(seconds*1000).format('mm:ss')}</p>
+        <p> You have guessed {championsGuessed.length} out of the {championNames.length + championsGuessed.length} champions </p>
+        <p> {championToGuess} {championData[championToGuess].title} </p>
+        <Input 
+          style={{ width:128, marginBottom:8 }} 
+          placeholder="Champion Name"
+          onPressEnter={e => checkInput(e)}
+        />
+      </div>
+    var body = 
+      <div>
+        <br/>
+        {championsGuessed}
+        <List
+          grid={{
+            gutter: 16, xs: 1, sm: 2, md: 4, lg: 4, xl: 6, xxl: 3,
+          }}
+          dataSource={championsGuessed}
+          renderItem={item => (
+            <List.Item>
+              <Palette src={require(`./data/champion/${item}.png`)}>
+                {({ data }) => (
+                  <div style={{ color: data.vibrant }}>
+                    {item}
+                    <br/><br/>
+                    <motion.img
                       alt={item}
-                      style={{height:81,width:81}}  
+                      animate={{ scale: 1.2 }}
+                      transition={{ duration: 0.5 }}
+                      style={{
+                        height: 60,
+                        width: 60,
+                        border: '6px',
+                        borderStyle: 'solid',
+                        borderRadius: 200,
+                        borderWidth: 5,
+                      }}
                       src={ require(`./data/champion/${item}.png`) } 
                     />
                   </div>
-                </div>
-              )}
-            </Palette>
-          </List.Item>
-        )}
-      />
-    </div>
+                )}
+              </Palette>
+            </List.Item>
+          )}
+        />
+      </div>
+  }
+
+  // Make body of page the game once start is clicked
+  if (championNames.length === 0) {
+    clearInterval(timer)
+    guess =
+      <div>
+        <p> Time: {moment(seconds*1000).format('mm:ss')}</p>
+        <p>you win</p>
+      </div>
+    start = 
+      <div></div>
   }
 
   // HTML Part
   return (
     <div className="App">
       <h1> League of Legends Champion Guesser </h1>
+      {guess}
+      {start}
       {body}
     </div>
   );
